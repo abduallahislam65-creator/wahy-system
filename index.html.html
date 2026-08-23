@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام وحي 2.0</title>
+    
+    <!-- إعدادات أيقونة التطبيق وملف التثبيت PWA -->
+    <link rel="icon" type="image/jpeg" href="Logo1.jpeg">
+    <link rel="apple-touch-icon" href="Logo1.jpeg">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- استدعاء خطوط جوجل وتنسيقات Bootstrap و FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --primary-blue: #121c26;
+            --gold: #cda966;
+            --light-bg: #f8f9fa;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--primary-blue);
+        }
+        .header {
+            background-color: var(--primary-blue);
+            color: var(--gold);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 20px;
+        }
+        .card {
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn-gold {
+            background-color: var(--gold);
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+        .btn-gold:hover {
+            background-color: #b5955a;
+            color: white;
+        }
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+            font-weight: bold;
+        }
+        textarea {
+            font-size: 0.9rem;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <!-- اللوجو الشفاف داخل التطبيق -->
+        <img src="Logo.png" alt="Wahy Academy Logo" style="max-height: 80px; margin-bottom: 10px;">
+        <h2>نظام وحي 2.0</h2>
+        <p class="mb-0" id="supervisorGreeting">أهلاً بك يا مشرفنا</p>
+    </div>
+
+    <div class="container">
+        
+        <!-- قسم التحليل -->
+        <div class="card p-3">
+            <h5 class="text-primary-blue"><i class="fa-solid fa-robot"></i> المحلل الذكي</h5>
+            <textarea id="rawMessage" class="form-control mb-2" rows="4" placeholder="الصق رسالة أستاذ مصطفى هنا..."></textarea>
+            <button class="btn btn-gold w-100" onclick="parseMessage()"><i class="fa-solid fa-wand-magic-sparkles"></i> تحليل الرسالة</button>
+        </div>
+
+        <!-- قسم بيانات الترايل -->
+        <div class="card p-3">
+            <h5 class="text-primary-blue"><i class="fa-solid fa-file-lines"></i> تفاصيل الترايل</h5>
+            <div class="row g-2">
+                <div class="col-6"><input type="text" id="studentName" class="form-control" placeholder="اسم الطالب"></div>
+                <div class="col-6"><input type="text" id="studentAge" class="form-control" placeholder="العمر"></div>
+                <div class="col-12"><input type="text" id="subjects" class="form-control" placeholder="المواد"></div>
+                <div class="col-12"><input type="text" id="timing" class="form-control" placeholder="التوقيت (مثال: اليوم 5 بتوقيتهم...)"></div>
+                <div class="col-6"><input type="text" id="price" class="form-control" placeholder="سعر الساعة"></div>
+                <div class="col-6"><input type="date" id="trialDate" class="form-control"></div>
+                <div class="col-12"><input type="text" id="teacherName" class="form-control" placeholder="اسم المعلم"></div>
+                <div class="col-12"><input type="text" id="groupLink" class="form-control" placeholder="رابط جروب الأسرة"></div>
+            </div>
+            <button class="btn btn-dark mt-3 w-100" onclick="generateMessages()"><i class="fa-solid fa-pen-nib"></i> تجهيز الرسائل</button>
+        </div>
+
+        <!-- قسم الرسائل الجاهزة (واتساب) -->
+        <div class="card p-3 hidden" id="messagesSection">
+            <h5 class="text-success"><i class="fa-brands fa-whatsapp"></i> رسائل الواتساب</h5>
+            
+            <label class="fw-bold mt-2">رسالة المعلم:</label>
+            <textarea id="msgTeacher" class="form-control mb-2" rows="5"></textarea>
+            <button class="btn whatsapp-btn w-100 mb-3" onclick="sendWA('msgTeacher')">إرسال للمعلم <i class="fa-brands fa-whatsapp"></i></button>
+
+            <label class="fw-bold">رسالة الأسرة (إنجليزي):</label>
+            <textarea id="msgFamily" class="form-control mb-2" rows="4"></textarea>
+            <button class="btn whatsapp-btn w-100 mb-3" onclick="sendWA('msgFamily')">إرسال للأسرة <i class="fa-brands fa-whatsapp"></i></button>
+        </div>
+
+        <!-- قسم الإغلاق والحسابات -->
+        <div class="card p-3">
+            <h5 class="text-primary-blue"><i class="fa-solid fa-check-double"></i> إغلاق الترايل</h5>
+            <select id="trialStatus" class="form-select mb-2" onchange="toggleInvoice()">
+                <option value="">-- اختر حالة الترايل --</option>
+                <option value="✅ نجاح">✅ نجاح (تحويل لطالب مستمر)</option>
+                <option value="❌ فشل">❌ فشل</option>
+                <option value="⏳ معلق">⏳ معلق</option>
+            </select>
+            
+            <div id="invoiceSection" class="hidden">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <select id="sessionDuration" class="form-select">
+                            <option value="">مدة الحصة</option>
+                            <option value="15">15 دقيقة</option>
+                            <option value="30">30 دقيقة</option>
+                            <option value="45">45 دقيقة</option>
+                            <option value="60">60 دقيقة</option>
+                            <option value="90">90 دقيقة</option>
+                            <option value="120">120 دقيقة</option>
+                        </select>
+                    </div>
+                    <div class="col-6"><input type="number" id="totalSessions" class="form-control" placeholder="الحصص شهرياً"></div>
+                </div>
+                <button class="btn btn-secondary w-100 mb-3" onclick="generateInvoice()"><i class="fa-solid fa-receipt"></i> تجهيز الفاتورة للإدارة</button>
+                <textarea id="msgInvoice" class="form-control mb-2 hidden" rows="6"></textarea>
+                <button id="btnInvoiceWA" class="btn whatsapp-btn w-100 mb-3 hidden" onclick="sendWA('msgInvoice')">إرسال للحسابات <i class="fa-brands fa-whatsapp"></i></button>
+            </div>
+            
+            <input type="text" id="failReason" class="form-control mb-3 hidden" placeholder="اكتب سبب الفشل هنا...">
+            
+            <button class="btn btn-gold w-100 btn-lg" onclick="saveToSystem()"><i class="fa-solid fa-cloud-arrow-up"></i> ترحيل إلى قاعدة البيانات</button>
+        </div>
+    </div>
+
+    <script>
+        // --- الإعدادات الأساسية ---
+        const API_URL = "https://script.google.com/macros/s/AKfycbw0OwbwPUNhz91DUjK4hVQx6REl6af3V3qltEAmN9pWcBb-JbipbpFNBeAL7-ceQM7x/exec";
+        
+        let supervisorName = localStorage.getItem("wahySupervisorName");
+        
+        window.onload = function() {
+            if(!supervisorName) {
+                supervisorName = prompt("أهلاً بك في نظام وحي 2.0! من فضلك أدخل اسمك (سيتم حفظه):");
+                if(supervisorName) localStorage.setItem("wahySupervisorName", supervisorName);
+            }
+            document.getElementById("supervisorGreeting").innerText = "أهلاً بك يا مشرفنا: " + (supervisorName || "الكريم");
+            document.getElementById("trialDate").valueAsDate = new Date();
+        };
+
+        // --- دالة التحليل الذكي (Regex) ---
+        function parseMessage() {
+            let text = document.getElementById("rawMessage").value;
+            if(!text) return Swal.fire('تنبيه', 'يرجى لصق الرسالة أولاً', 'warning');
+
+            // تنظيف الأرقام العربية إلى إنجليزية
+            const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+            for(let i=0; i<10; i++) text = text.replace(arabicNumbers[i], i);
+
+            let lines = text.split('\n');
+            let timeLine = "", subjectsLine = "", priceLine = "", namesLine = "";
+
+            lines.forEach(line => {
+                if(line.includes("بتوقيتهم") || line.includes("بتوقيتنا") || line.includes("اليوم") || line.includes("غدا")) {
+                    timeLine = line.trim();
+                } else if(line.includes("قرآن") || line.includes("عربي") || line.includes("إسلاميات") || line.includes("تأسيس")) {
+                    subjectsLine = line.trim();
+                } else if(line.includes("دولار") || line.includes("$")) {
+                    priceLine = line.trim();
+                } else if(line.trim().length > 2 && !namesLine) {
+                    namesLine = line.trim();
+                }
+            });
+
+            let nameMatch = namesLine.match(/([a-zA-Z\s]+)/);
+            let ageMatch = namesLine.match(/(\d+)/);
+            
+            document.getElementById("studentName").value = namesLine.replace(/[0-9]/g, '').replace(/years/g, '').replace(/yrs/g, '').trim();
+            document.getElementById("studentAge").value = ageMatch ? ageMatch[0] : "";
+            document.getElementById("subjects").value = subjectsLine;
+            document.getElementById("timing").value = timeLine;
+            document.getElementById("price").value = priceLine || "8 دولار";
+
+            Swal.fire({icon: 'success', title: 'تم التحليل', text: 'يرجى مراجعة الخانات وتعديل ما يلزم', timer: 1500, showConfirmButton: false});
+        }
+
+        // --- توليد الرسائل ---
+        function generateMessages() {
+            let sName = document.getElementById("studentName").value;
+            let sAge = document.getElementById("studentAge").value;
+            let subj = document.getElementById("subjects").value;
+            let timing = document.getElementById("timing").value;
+            let tName = document.getElementById("teacherName").value;
+            let gLink = document.getElementById("groupLink").value;
+
+            if(!tName) return Swal.fire('تنبيه', 'يجب كتابة اسم المعلم أولاً', 'warning');
+
+            let tMsg = `السلام عليكم أستاذ(ة) ${tName}،\nيوجد حصة تجريبية (ترايل) جديدة بانتظارك!\n\n👨‍🎓 الطالب: ${sName} (العمر: ${sAge})\n📚 المواد: ${subj}\n🗓️ الموعد: ${timing}\n🔗 رابط الجروب: ${gLink}\n\nبالتوفيق إن شاء الله 🍀`;
+            document.getElementById("msgTeacher").value = tMsg;
+
+            let fMsg = `You have been scheduled with teacher ${tName}, and your session is ${timing}. \nPlease join using the permanent link below — this link will be used for all future sessions👇\n${gLink}`;
+            document.getElementById("msgFamily").value = fMsg;
+
+            document.getElementById("messagesSection").classList.remove("hidden");
+        }
+
+        function toggleInvoice() {
+            let status = document.getElementById("trialStatus").value;
+            document.getElementById("invoiceSection").classList.toggle("hidden", status !== "✅ نجاح");
+            document.getElementById("failReason").classList.toggle("hidden", status !== "❌ فشل");
+        }
+
+        function generateInvoice() {
+            let sName = document.getElementById("studentName").value;
+            let tName = document.getElementById("teacherName").value;
+            let sessions = document.getElementById("totalSessions").value;
+            let duration = document.getElementById("sessionDuration").value;
+            let price = document.getElementById("price").value.replace(/[^0-9]/g, ''); 
+            let startDate = new Date(document.getElementById("trialDate").value).toLocaleDateString('en-GB');
+
+            if(!sessions || !duration) return Swal.fire('تنبيه', 'أدخل عدد الحصص ومدة الحصة', 'warning');
+
+            let invMsg = `🍀 اسم الأسرة: ${sName}\n🍀 اسم المعلم : ${tName}\n🍀 عدد الحصص : ${sessions} (شهري)\n🍀 مدة كل حصة : ${duration} دقيقة\n🍀 سعر الساعه : ${price}\n🍀 تاريخ الاشتراك : ${startDate}`;
+            
+            document.getElementById("msgInvoice").value = invMsg;
+            document.getElementById("msgInvoice").classList.remove("hidden");
+            document.getElementById("btnInvoiceWA").classList.remove("hidden");
+        }
+
+        // --- إرسال واتساب ---
+        function sendWA(elementId) {
+            let text = document.getElementById(elementId).value;
+            let encodedText = encodeURIComponent(text);
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        }
+
+        // --- الترحيل لقاعدة البيانات ---
+        function saveToSystem() {
+            let status = document.getElementById("trialStatus").value;
+            if(!status) return Swal.fire('خطأ', 'يجب اختيار حالة الترايل قبل الترحيل', 'error');
+
+            let duration = document.getElementById("sessionDuration").value;
+            let sessions = document.getElementById("totalSessions").value;
+            let totalHrs = (status === "✅ نجاح") ? (parseInt(duration) * parseInt(sessions) / 60).toFixed(2) : "";
+
+            let payload = {
+                action: "addTrial",
+                supervisorName: supervisorName,
+                studentName: document.getElementById("studentName").value,
+                age: document.getElementById("studentAge").value,
+                subjects: document.getElementById("subjects").value,
+                timing: document.getElementById("timing").value,
+                price: document.getElementById("price").value,
+                trialDate: new Date(document.getElementById("trialDate").value).toLocaleDateString('en-GB'),
+                teacherName: document.getElementById("teacherName").value,
+                groupLink: document.getElementById("groupLink").value,
+                status: status,
+                failReason: document.getElementById("failReason").value,
+                duration: duration,
+                totalSessions: sessions,
+                totalHours: totalHrs,
+                startDate: new Date(document.getElementById("trialDate").value).toLocaleDateString('en-GB')
+            };
+
+            Swal.fire({
+                title: 'جاري الترحيل...',
+                text: 'يتم الآن حفظ البيانات وتحديث الساعات آلياً',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            });
+
+            fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                Swal.fire('تم بنجاح! 👑', 'تم الترحيل والأتمتة في قاعدة البيانات', 'success')
+                .then(() => { window.location.reload(); });
+            }).catch(error => {
+                Swal.fire('حدث خطأ', 'تأكد من اتصالك بالإنترنت ورابط الـ API', 'error');
+            });
+        }
+    </script>
+</body>
+</html>
