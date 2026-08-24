@@ -2,296 +2,794 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام وحي 2.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- أيقونات التطبيق -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <title>Wahy Academy ERP | نظام الإدارة الشامل</title>
     
-    <!-- إعدادات أيقونة التطبيق وملف التثبيت PWA -->
-    <link rel="icon" type="image/jpeg" href="Logo1.jpeg">
-    <link rel="apple-touch-icon" href="Logo1.jpeg">
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- استدعاء خطوط جوجل وتنسيقات Bootstrap و FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- الخطوط والمكتبات -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: { wahy: { dark: '#121c26', gold: '#cda966', light: '#f8fafc', accent: '#1f2e3d' } }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary-blue: #121c26;
-            --gold: #cda966;
-            --light-bg: #f8f9fa;
-        }
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--light-bg);
-            color: var(--primary-blue);
-        }
-        .header {
-            background-color: var(--primary-blue);
-            color: var(--gold);
-            padding: 15px;
-            text-align: center;
-            border-bottom: 3px solid var(--gold);
-            border-radius: 0 0 15px 15px;
-            margin-bottom: 20px;
-        }
-        .card {
-            border: 1px solid var(--gold);
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .btn-gold {
-            background-color: var(--gold);
-            color: var(--primary-blue);
-            font-weight: bold;
-        }
-        .btn-gold:hover {
-            background-color: #b5955a;
-            color: white;
-        }
-        .whatsapp-btn {
-            background-color: #25D366;
-            color: white;
-            font-weight: bold;
-        }
-        textarea {
-            font-size: 0.9rem;
-        }
-        .hidden { display: none; }
+        body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cda966; border-radius: 10px; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* تنسيقات احترافية للحقول */
+        .input-group { margin-bottom: 0.5rem; }
+        .input-group label { font-size: 0.75rem; color: #475569; margin-bottom: 0.3rem; display: block; font-weight: 800; }
+        .input-field { width: 100%; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 0.75rem; font-size: 0.875rem; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .input-field:focus { outline: none; border-color: #cda966; box-shadow: 0 0 0 3px rgba(205,169,102,0.15); }
+        .input-field:disabled { background-color: #f1f5f9; cursor: not-allowed; }
+        
+        .modal { display: none; }
+        .modal.active { display: flex; animation: fadeIn 0.2s; }
     </style>
 </head>
-<body>
+<body class="text-gray-800 font-sans h-screen flex">
 
-    <div class="header">
-        <!-- اللوجو الشفاف داخل التطبيق -->
-        <img src="Logo.png" alt="Wahy Academy Logo" style="max-height: 80px; margin-bottom: 10px;">
-        <h2>نظام وحي 2.0</h2>
-        <p class="mb-0" id="supervisorGreeting">أهلاً بك يا مشرفنا</p>
+    <!-- شاشة التحميل (Loader) -->
+    <div id="loader" class="fixed inset-0 bg-wahy-dark z-50 flex flex-col justify-center items-center text-wahy-gold">
+        <div class="w-16 h-16 border-4 border-wahy-gold border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(205,169,102,0.5)]"></div>
+        <p class="text-lg font-black tracking-wide animate-pulse" id="loaderText">جاري مزامنة النظام...</p>
     </div>
 
-    <div class="container">
-        
-        <!-- قسم التحليل -->
-        <div class="card p-3">
-            <h5 class="text-primary-blue"><i class="fa-solid fa-robot"></i> المحلل الذكي</h5>
-            <textarea id="rawMessage" class="form-control mb-2" rows="4" placeholder="الصق رسالة أستاذ مصطفى هنا..."></textarea>
-            <button class="btn btn-gold w-100" onclick="parseMessage()"><i class="fa-solid fa-wand-magic-sparkles"></i> تحليل الرسالة</button>
-        </div>
-
-        <!-- قسم بيانات الترايل -->
-        <div class="card p-3">
-            <h5 class="text-primary-blue"><i class="fa-solid fa-file-lines"></i> تفاصيل الترايل</h5>
-            <div class="row g-2">
-                <div class="col-6"><input type="text" id="studentName" class="form-control" placeholder="اسم الطالب"></div>
-                <div class="col-6"><input type="text" id="studentAge" class="form-control" placeholder="العمر"></div>
-                <div class="col-12"><input type="text" id="subjects" class="form-control" placeholder="المواد"></div>
-                <div class="col-12"><input type="text" id="timing" class="form-control" placeholder="التوقيت (مثال: اليوم 5 بتوقيتهم...)"></div>
-                <div class="col-6"><input type="text" id="price" class="form-control" placeholder="سعر الساعة"></div>
-                <div class="col-6"><input type="date" id="trialDate" class="form-control"></div>
-                <div class="col-12"><input type="text" id="teacherName" class="form-control" placeholder="اسم المعلم"></div>
-                <div class="col-12"><input type="text" id="groupLink" class="form-control" placeholder="رابط جروب الأسرة"></div>
+    <!-- شاشة الدخول الآمنة (Login) -->
+    <div id="loginScreen" class="hidden fixed inset-0 bg-wahy-dark z-40 flex flex-col justify-center items-center px-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center transform transition-transform duration-500 hover:scale-105">
+            <div class="w-24 h-24 bg-wahy-dark rounded-full mx-auto flex items-center justify-center mb-6 border-4 border-wahy-gold shadow-lg">
+                <i class="fas fa-fingerprint text-4xl text-wahy-gold"></i>
             </div>
-            <button class="btn btn-dark mt-3 w-100" onclick="generateMessages()"><i class="fa-solid fa-pen-nib"></i> تجهيز الرسائل</button>
+            <h2 class="text-3xl font-black text-wahy-dark mb-1">وحي ERP</h2>
+            <p class="text-gray-500 mb-8 text-sm font-bold">بوابة الوصول الموحدة</p>
+            <input type="password" id="pinInput" placeholder="الرمز السري" class="w-full bg-gray-50 text-center text-3xl tracking-[0.5em] font-black py-4 rounded-xl mb-6 border border-gray-200 focus:outline-none focus:border-wahy-gold focus:ring-2 focus:ring-wahy-gold/20 transition">
+            <button onclick="login()" class="w-full bg-wahy-gold text-wahy-dark font-black text-lg py-4 rounded-xl hover:bg-yellow-500 transition shadow-lg flex justify-center items-center gap-2">
+                دخول للنظام <i class="fas fa-sign-in-alt"></i>
+            </button>
         </div>
+    </div>
 
-        <!-- قسم الرسائل الجاهزة (واتساب) -->
-        <div class="card p-3 hidden" id="messagesSection">
-            <h5 class="text-success"><i class="fa-brands fa-whatsapp"></i> رسائل الواتساب</h5>
-            
-            <label class="fw-bold mt-2">رسالة المعلم:</label>
-            <textarea id="msgTeacher" class="form-control mb-2" rows="5"></textarea>
-            <button class="btn whatsapp-btn w-100 mb-3" onclick="sendWA('msgTeacher')">إرسال للمعلم <i class="fa-brands fa-whatsapp"></i></button>
+    <!-- الهيكل الإداري الشامل (App Container) -->
+    <div id="appContainer" class="hidden w-full h-full flex flex-col md:flex-row">
+        
+        <!-- شريط التنقل (Navigation) -->
+        <nav class="bg-wahy-dark text-gray-400 md:w-64 w-full md:h-full h-16 fixed md:relative bottom-0 z-30 flex md:flex-col justify-around md:justify-start shadow-[0_-10px_20px_rgba(0,0,0,0.1)] md:shadow-2xl shrink-0">
+            <div class="hidden md:flex flex-col items-center py-8 border-b border-gray-700/50">
+                <div class="w-16 h-16 bg-gradient-to-br from-wahy-gold to-yellow-600 rounded-full flex items-center justify-center text-wahy-dark text-2xl mb-3 shadow-lg"><i class="fas fa-crown"></i></div>
+                <h1 class="text-white font-black text-xl tracking-wide">أكاديمية وحي</h1>
+                <p id="navRole" class="text-wahy-gold text-xs font-bold bg-black/30 px-4 py-1 rounded-full mt-2 shadow-inner">مدير النظام</p>
+            </div>
+            <div class="flex md:flex-col w-full md:mt-4 md:px-3 gap-1 h-full md:h-auto items-center md:items-stretch" id="navButtons"></div>
+            <div class="hidden md:block mt-auto p-4 border-t border-gray-700/50">
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 py-3 rounded-xl hover:bg-red-500/20 transition font-bold">
+                    <i class="fas fa-power-off"></i> تسجيل الخروج
+                </button>
+            </div>
+        </nav>
 
-            <label class="fw-bold">رسالة الأسرة (إنجليزي):</label>
-            <textarea id="msgFamily" class="form-control mb-2" rows="4"></textarea>
-            <button class="btn whatsapp-btn w-100 mb-3" onclick="sendWA('msgFamily')">إرسال للأسرة <i class="fa-brands fa-whatsapp"></i></button>
-        </div>
-
-        <!-- قسم الإغلاق والحسابات -->
-        <div class="card p-3">
-            <h5 class="text-primary-blue"><i class="fa-solid fa-check-double"></i> إغلاق الترايل</h5>
-            <select id="trialStatus" class="form-select mb-2" onchange="toggleInvoice()">
-                <option value="">-- اختر حالة الترايل --</option>
-                <option value="✅ نجاح">✅ نجاح (تحويل لطالب مستمر)</option>
-                <option value="❌ فشل">❌ فشل</option>
-                <option value="⏳ معلق">⏳ معلق</option>
-            </select>
-            
-            <div id="invoiceSection" class="hidden">
-                <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <select id="sessionDuration" class="form-select">
-                            <option value="">مدة الحصة</option>
-                            <option value="15">15 دقيقة</option>
-                            <option value="30">30 دقيقة</option>
-                            <option value="45">45 دقيقة</option>
-                            <option value="60">60 دقيقة</option>
-                            <option value="90">90 دقيقة</option>
-                            <option value="120">120 دقيقة</option>
-                        </select>
+        <!-- مساحة العمل المركزية (Main Workspace) -->
+        <main class="flex-1 bg-wahy-light flex flex-col h-full overflow-hidden relative pb-20 md:pb-0">
+            <!-- الهيدر للموبايل -->
+            <header class="md:hidden bg-white shadow-sm p-4 flex justify-between items-center z-20 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-wahy-gold rounded-full flex items-center justify-center text-wahy-dark"><i class="fas fa-crown text-lg"></i></div>
+                    <div>
+                        <h2 class="font-black text-wahy-dark text-lg leading-tight">وحي ERP</h2>
+                        <span id="mobileUserName" class="text-xs text-gray-500 font-bold">مرحباً</span>
                     </div>
-                    <div class="col-6"><input type="number" id="totalSessions" class="form-control" placeholder="الحصص شهرياً"></div>
                 </div>
-                <button class="btn btn-secondary w-100 mb-3" onclick="generateInvoice()"><i class="fa-solid fa-receipt"></i> تجهيز الفاتورة للإدارة</button>
-                <textarea id="msgInvoice" class="form-control mb-2 hidden" rows="6"></textarea>
-                <button id="btnInvoiceWA" class="btn whatsapp-btn w-100 mb-3 hidden" onclick="sendWA('msgInvoice')">إرسال للحسابات <i class="fa-brands fa-whatsapp"></i></button>
+                <button onclick="logout()" class="text-red-400 p-2 bg-red-50 rounded-full hover:bg-red-100 transition"><i class="fas fa-power-off text-lg"></i></button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="viewsContainer">
+                
+                <!-- [1] لوحة القيادة (Admin Dashboard) -->
+                <div id="view-admin" class="view-section">
+                    <h2 class="text-2xl md:text-3xl font-black text-wahy-dark mb-6 border-r-4 border-wahy-gold pr-3">غرفة عمليات الإدارة</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <i class="fas fa-users text-blue-500 text-2xl mb-2 bg-blue-50 p-2 rounded-lg"></i>
+                            <p class="text-xs text-gray-500 font-bold mt-2">إجمالي الترايلات</p>
+                            <h3 class="text-3xl font-black text-wahy-dark" id="statTotalTrials">0</h3>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <i class="fas fa-check-circle text-green-500 text-2xl mb-2 bg-green-50 p-2 rounded-lg"></i>
+                            <p class="text-xs text-gray-500 font-bold mt-2">الترايلات الناجحة</p>
+                            <h3 class="text-3xl font-black text-wahy-dark" id="statSuccessTrials">0</h3>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <i class="fas fa-percentage text-purple-500 text-2xl mb-2 bg-purple-50 p-2 rounded-lg"></i>
+                            <p class="text-xs text-gray-500 font-bold mt-2">معدل الإغلاق</p>
+                            <h3 class="text-3xl font-black text-wahy-dark" id="statConversion">0%</h3>
+                        </div>
+                        <div class="bg-gradient-to-br from-wahy-dark to-gray-800 p-5 rounded-2xl shadow-lg border border-gray-700 text-white relative overflow-hidden">
+                            <i class="fas fa-coins text-wahy-gold text-2xl mb-2 relative z-10 bg-white/10 p-2 rounded-lg"></i>
+                            <p class="text-xs text-gray-300 font-bold mt-2 relative z-10">إيرادات الساعات (المتوقعة)</p>
+                            <h3 class="text-3xl font-black text-wahy-gold relative z-10" id="statRevenue">0 <span class="text-sm">ساعة</span></h3>
+                            <i class="fas fa-chart-line absolute -bottom-2 -left-2 text-6xl text-white opacity-5"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-wahy-dark mb-4 border-b border-gray-200 pb-2">أداء المشرفين (Live Tracker)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="supervisorsPerformance"></div>
+                </div>
+
+                <!-- [2] المحلل الذكي ومعالجة الترايل (Smart Parser) -->
+                <div id="view-new-trial" class="view-section">
+                    <h2 class="text-2xl md:text-3xl font-black text-wahy-dark mb-6 border-r-4 border-wahy-gold pr-3">المحلل الذكي للترايلات</h2>
+                    
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-wahy-gold"></div>
+                        <label class="block text-sm font-black text-gray-700 mb-3"><i class="fas fa-paste text-wahy-gold ml-1"></i> الصق رسالة الإدارة هنا:</label>
+                        <textarea id="rawMessage" rows="4" class="input-field mb-4 text-base leading-relaxed" placeholder="انسخ الرسالة من الواتساب والصقها هنا، وسيقوم النظام بتشريحها آلياً..."></textarea>
+                        <button onclick="parseMessage2()" class="w-full bg-wahy-dark text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg flex justify-center items-center gap-2 text-lg">
+                            <i class="fas fa-microchip text-wahy-gold"></i> تحليل واستخراج البيانات
+                        </button>
+                    </div>
+
+                    <!-- نموذج المراجعة المطابق 100% للشيت -->
+                    <div id="parsedDataForm" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <h3 class="text-lg font-black text-wahy-dark mb-5 border-b pb-2"><i class="fas fa-check-double text-green-500 ml-1"></i> مراجعة وتدقيق البيانات</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                            <div class="input-group md:col-span-2"><label>اسم الطالب (الطلاب)</label><input type="text" id="f_name" class="input-field font-bold"></div>
+                            <div class="input-group"><label>العدد (مكتشف آلياً)</label><input type="number" id="f_count" class="input-field bg-yellow-50 font-black text-center text-lg"></div>
+                            <div class="input-group"><label>العمر</label><input type="number" id="f_age" class="input-field text-center"></div>
+                            <div class="input-group md:col-span-2"><label>المواد المطلوبة</label><input type="text" id="f_subjects" class="input-field"></div>
+                        </div>
+
+                        <div class="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 mb-5">
+                            <h4 class="text-sm font-black text-wahy-dark mb-4"><i class="fas fa-clock text-blue-500 ml-1"></i> التوقيتات الدقيقة</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="input-group"><label>يوم الحصة</label><input type="text" id="f_day" class="input-field"></div>
+                                <div class="input-group md:col-span-2"><label>توقيت الأسرة (للرسالة الإنجليزية)</label><input type="text" id="f_studentTime" dir="ltr" class="input-field text-left font-mono font-bold text-blue-700 bg-white"></div>
+                                <div class="input-group"><label>توقيت المعلم (بالعربية)</label><input type="text" id="f_egyptTime" class="input-field font-bold bg-white"></div>
+                                <div class="input-group"><label>فرق الساعات (+/-)</label><input type="text" id="f_timeDiff" class="input-field text-center"></div>
+                                <div class="input-group"><label>سعر الساعة</label><input type="text" id="f_price" class="input-field text-green-600 font-bold text-center"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group mb-6">
+                            <label class="text-wahy-dark">المعلم المناسب (الترتيب للأعلى جودة)</label>
+                            <select id="teacherSelect" class="input-field font-black text-wahy-dark text-lg py-3 shadow-sm bg-gray-50 border-gray-300">
+                                <option value="">-- اضغط لاختيار المعلم --</option>
+                            </select>
+                        </div>
+
+                        <!-- أدوات المراسلة الآمنة -->
+                        <div class="grid grid-cols-2 gap-4 mb-8 border-b pb-8 border-gray-100">
+                            <button onclick="sendTeacherWhatsApp()" class="bg-green-50 text-green-700 font-black py-4 rounded-xl border border-green-200 hover:bg-green-100 transition shadow-sm flex flex-col items-center justify-center gap-1">
+                                <i class="fab fa-whatsapp text-3xl"></i> إبلاغ المعلم بالميعاد
+                            </button>
+                            <button onclick="sendFamilyWhatsApp()" class="bg-blue-50 text-blue-700 font-black py-4 rounded-xl border border-blue-200 hover:bg-blue-100 transition shadow-sm flex flex-col items-center justify-center gap-1">
+                                <i class="fab fa-whatsapp text-3xl"></i> إرسال الزوم للأسرة
+                            </button>
+                        </div>
+
+                        <!-- قسم الإغلاق والترحيل (يحتوي على الـ 20 خانة) -->
+                        <div class="bg-wahy-dark p-6 rounded-2xl text-white shadow-xl">
+                            <label class="block text-sm font-black text-wahy-gold mb-3">القرار النهائي والترحيل:</label>
+                            <select id="trialStatus" onchange="toggleSuccessFields()" class="w-full bg-gray-800 text-white border border-gray-600 rounded-xl p-4 mb-5 font-black text-lg focus:border-wahy-gold focus:ring-1 focus:ring-wahy-gold outline-none transition">
+                                <option value="معلق">⏳ معلق (قيد المتابعة مع الأسرة)</option>
+                                <option value="نجاح">✅ نجاح (الأسرة وافقت واشتركت)</option>
+                                <option value="فشل">❌ فشل (الأسرة رفضت)</option>
+                            </select>
+
+                            <div id="successFields" class="hidden grid-cols-2 gap-4 mb-5">
+                                <div class="input-group"><label class="text-gray-300">مدة الحصة (بالدقائق)</label><input type="number" id="f_duration" onkeyup="calculateHours()" class="input-field text-black text-center font-bold"></div>
+                                <div class="input-group"><label class="text-gray-300">إجمالي الحصص بالشهر</label><input type="number" id="f_sessions" onkeyup="calculateHours()" class="input-field text-black text-center font-bold"></div>
+                                <div class="input-group"><label class="text-wahy-gold">إجمالي الساعات (آلي)</label><input type="text" id="f_totalHours" readonly class="input-field bg-gray-700 border-gray-600 text-white font-black text-center"></div>
+                                <div class="input-group"><label class="text-gray-300">تاريخ البدء الفعلي</label><input type="text" id="f_startDate" class="input-field text-black text-center" placeholder="يوم/شهر/سنة"></div>
+                            </div>
+                            
+                            <div id="failFields" class="hidden mb-5">
+                                <div class="input-group"><label class="text-red-300">سبب الفشل (مهم للتحليل)</label><input type="text" id="f_failReason" class="input-field text-black" placeholder="السعر، الموعد، المعلم، إلخ..."></div>
+                            </div>
+                            
+                            <div class="input-group mb-6">
+                                <label class="text-gray-400">ملاحظات إضافية (تُحفظ في الشيت)</label>
+                                <textarea id="f_notes" rows="2" class="input-field text-black" placeholder="أي تفاصيل أخرى..."></textarea>
+                            </div>
+
+                            <button onclick="submitTrial()" class="w-full bg-gradient-to-r from-wahy-gold to-yellow-600 text-wahy-dark font-black text-xl py-4 rounded-xl hover:from-yellow-500 hover:to-yellow-700 transition shadow-[0_4px_20px_rgba(205,169,102,0.4)]">
+                                <i class="fas fa-cloud-upload-alt ml-2"></i> حفظ وترحيل البيانات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- [3] سجل المتابعة CRM (تعديل الترايلات القديمة) -->
+                <div id="view-crm" class="view-section">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl md:text-3xl font-black text-wahy-dark border-r-4 border-wahy-gold pr-3">سجل المتابعة والعملاء</h2>
+                        <span class="bg-orange-100 text-orange-800 text-sm font-bold px-4 py-2 rounded-xl border border-orange-200 shadow-sm"><i class="fas fa-bell ml-1"></i> لديك ترايلات معلقة</span>
+                    </div>
+                    <div class="mb-6 relative">
+                        <i class="fas fa-search absolute right-4 top-4 text-gray-400 text-lg"></i>
+                        <input type="text" id="crmSearch" onkeyup="renderPendingTrials()" class="input-field pl-4 pr-12 py-4 text-lg shadow-sm font-bold text-wahy-dark" placeholder="ابحث باسم الطالب لفتح ملفه وتعديله...">
+                    </div>
+                    <div id="pendingTrialsList" class="space-y-4"></div>
+                </div>
+
+                <!-- [4] الموارد البشرية (إدارة المعلمين) -->
+                <div id="view-teachers" class="view-section">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl md:text-3xl font-black text-wahy-dark border-r-4 border-wahy-gold pr-3">الموارد البشرية</h2>
+                        <button onclick="document.getElementById('addTeacherModal').classList.add('active')" class="bg-wahy-dark text-white px-5 py-3 rounded-xl text-sm font-black shadow-lg hover:bg-gray-800 transition flex items-center gap-2">
+                            <i class="fas fa-user-plus"></i> إضافة معلم جديد للقاعدة
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="teachersGrid"></div>
+                </div>
+
             </div>
-            
-            <input type="text" id="failReason" class="form-control mb-3 hidden" placeholder="اكتب سبب الفشل هنا...">
-            
-            <button class="btn btn-gold w-100 btn-lg" onclick="saveToSystem()"><i class="fa-solid fa-cloud-arrow-up"></i> ترحيل إلى قاعدة البيانات</button>
+        </main>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- النوافذ المنبثقة (Modals) الشاملة للتعديل -->
+    <!-- ======================================================== -->
+    
+    <!-- 1. نافذة التعديل الشاملة (تطابق الـ 20 عمود) -->
+    <div id="editTrialModal" class="modal fixed inset-0 bg-wahy-dark/80 backdrop-blur-sm z-50 justify-center items-center px-4">
+        <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] transform transition-all">
+            <div class="bg-wahy-dark p-5 flex justify-between items-center shrink-0 border-b-4 border-wahy-gold">
+                <h3 class="text-white font-black text-xl"><i class="fas fa-user-edit text-wahy-gold ml-2"></i>الملف الكامل للطالب</h3>
+                <button onclick="closeModal('editTrialModal')" class="text-gray-400 hover:text-white bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-gray-50">
+                <input type="hidden" id="edit_rowIndex">
+                <input type="hidden" id="edit_oldStatus">
+                
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm mb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="input-group md:col-span-2"><label>اسم الطالب (قابل للتعديل)</label><input type="text" id="edit_name" class="input-field font-black text-wahy-dark text-lg"></div>
+                    <div class="input-group"><label>المعلم المسؤول</label><input type="text" id="edit_teacher" class="input-field bg-gray-100" readonly></div>
+                    <div class="input-group"><label>السعر المتفق عليه</label><input type="text" id="edit_price" class="input-field"></div>
+                    <div class="input-group md:col-span-2"><label>رابط جروب الإدارة/الأسرة (أضفه الآن)</label><input type="text" id="edit_groupLink" dir="ltr" class="input-field border-blue-300 bg-blue-50 focus:border-blue-500 font-mono text-sm" placeholder="https://chat.whatsapp.com/..."></div>
+                </div>
+                
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm mb-5">
+                    <label class="block text-sm font-black text-wahy-dark mb-3 border-b pb-2">القرار النهائي وتحديث الحالة:</label>
+                    <select id="edit_status" onchange="toggleEditSuccessFields()" class="w-full bg-gray-100 border border-gray-300 rounded-xl p-4 mb-4 font-black text-lg focus:border-wahy-gold outline-none">
+                        <option value="معلق">⏳ ما زال معلقاً (جاري المتابعة)</option>
+                        <option value="نجاح">✅ نجاح (حسم الاشتراك والنقل للطلاب)</option>
+                        <option value="فشل">❌ فشل (إغلاق الملف)</option>
+                    </select>
+
+                    <div id="edit_successFields" class="hidden grid-cols-2 gap-4 p-5 bg-green-50 rounded-2xl border border-green-200">
+                        <div class="input-group"><label class="text-green-800">مدة الحصة (دقائق)</label><input type="number" id="edit_duration" onkeyup="calcEditHours()" class="input-field text-center font-bold"></div>
+                        <div class="input-group"><label class="text-green-800">عدد الحصص الشهري</label><input type="number" id="edit_sessions" onkeyup="calcEditHours()" class="input-field text-center font-bold"></div>
+                        <div class="input-group"><label class="text-green-800">إجمالي الساعات</label><input type="text" id="edit_totalHours" readonly class="input-field bg-green-200 border-none font-black text-center text-green-900"></div>
+                        <div class="input-group"><label class="text-green-800">تاريخ البدء</label><input type="text" id="edit_startDate" class="input-field text-center" placeholder="يوم/شهر/سنة"></div>
+                    </div>
+                    
+                    <div id="edit_failFields" class="hidden mt-4">
+                         <div class="input-group"><label class="text-red-700">سبب الفشل للتسجيل</label><input type="text" id="edit_failReason" class="input-field border-red-200 bg-red-50"></div>
+                    </div>
+                </div>
+
+                <div class="input-group mb-6 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                    <label>ملاحظات إضافية</label>
+                    <textarea id="edit_notes" rows="2" class="input-field"></textarea>
+                </div>
+
+                <button onclick="saveTrialEdit()" class="w-full bg-wahy-gold text-wahy-dark font-black text-lg py-4 rounded-xl hover:bg-yellow-500 transition shadow-lg">
+                    <i class="fas fa-save ml-2"></i> اعتماد التحديثات في قاعدة البيانات
+                </button>
+            </div>
         </div>
     </div>
 
+    <!-- 2. نافذة إضافة معلم -->
+    <div id="addTeacherModal" class="modal fixed inset-0 bg-wahy-dark/80 backdrop-blur-sm z-50 justify-center items-center px-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-wahy-dark p-5 flex justify-between items-center border-b-4 border-wahy-gold">
+                <h3 class="text-white font-black"><i class="fas fa-user-plus text-wahy-gold ml-2"></i>إضافة معلم جديد</h3>
+                <button onclick="closeModal('addTeacherModal')" class="text-gray-400 hover:text-white bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="input-group mb-4"><label>اسم المعلم (كما سيظهر بالرسائل)</label><input type="text" id="new_teacherName" class="input-field font-bold text-lg"></div>
+                <div class="input-group mb-4"><label>المواد التي يدرسها</label><input type="text" id="new_teacherSubjects" class="input-field" placeholder="مثال: قرآن، نور بيان..."></div>
+                <div class="input-group mb-8"><label>رابط الزوم الدائم</label><input type="text" id="new_teacherZoom" class="input-field font-mono text-sm border-blue-300" dir="ltr" placeholder="https://zoom.us/j/..."></div>
+                
+                <button onclick="saveNewTeacher()" class="w-full bg-wahy-dark text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-md">
+                    <i class="fas fa-check-circle text-wahy-gold ml-2"></i> حفظ المعلم في الدليل
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- السكربت الإداري (JavaScript Logic) المُنقح -->
+    <!-- ======================================================== -->
     <script>
-        // --- الإعدادات الأساسية ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbw0OwbwPUNhz91DUjK4hVQx6REl6af3V3qltEAmN9pWcBb-JbipbpFNBeAL7-ceQM7x/exec";
+        // الرابط السحري المعصوم
+        const API_URL = "https://script.google.com/macros/s/AKfycbz78cI2_yus1mnLptY2repfbiwuKWaYbe9j52H0XZKEaxDZekGs6ruEFzePLvmf9RgL/exec";
         
-        let supervisorName = localStorage.getItem("wahySupervisorName");
-        
-        window.onload = function() {
-            if(!supervisorName) {
-                supervisorName = prompt("أهلاً بك في نظام وحي 2.0! من فضلك أدخل اسمك (سيتم حفظه):");
-                if(supervisorName) localStorage.setItem("wahySupervisorName", supervisorName);
+        let systemData = { supervisors: [], teachers: [], trials: [], students: [] };
+        let currentUser = null; 
+
+        // فحص حالة الإنترنت لمنع الأخطاء
+        function checkConnection() {
+            if (!navigator.onLine) {
+                Swal.fire("انقطاع الإنترنت", "تأكد من اتصالك بالشبكة قبل إجراء أي عملية.", "error");
+                return false;
             }
-            document.getElementById("supervisorGreeting").innerText = "أهلاً بك يا مشرفنا: " + (supervisorName || "الكريم");
-            document.getElementById("trialDate").valueAsDate = new Date();
+            return true;
+        }
+
+        window.onload = async () => {
+            let savedName = localStorage.getItem("wahy_user_name");
+            let savedRole = localStorage.getItem("wahy_user_role");
+            if (savedName && savedRole) {
+                currentUser = { name: savedName, role: savedRole };
+                await loadAllData(); 
+                renderApp();
+            } else {
+                await fetchSupervisorsOnly();
+            }
         };
 
-        // --- دالة التحليل الذكي (Regex) ---
-        function parseMessage() {
-            let text = document.getElementById("rawMessage").value;
-            if(!text) return Swal.fire('تنبيه', 'يرجى لصق الرسالة أولاً', 'warning');
+        async function fetchSupervisorsOnly() {
+            if(!checkConnection()) return;
+            try {
+                let res = await fetch(API_URL + "?action=get_supervisors");
+                systemData.supervisors = await res.json();
+                document.getElementById("loader").classList.add("hidden");
+                document.getElementById("loginScreen").classList.remove("hidden");
+            } catch (e) {
+                Swal.fire("خطأ شبكة", "يرجى تحديث الصفحة.", "error");
+            }
+        }
 
-            // تنظيف الأرقام العربية إلى إنجليزية
-            const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
-            for(let i=0; i<10; i++) text = text.replace(arabicNumbers[i], i);
+        async function loadAllData() {
+            if(!checkConnection()) return;
+            document.getElementById("loader").classList.remove("hidden");
+            try {
+                let res = await fetch(API_URL + "?action=get_all_data");
+                let payload = await res.json();
+                systemData.teachers = payload.teachers || [];
+                systemData.trials = payload.trials || [];
+                systemData.students = payload.students || [];
+                document.getElementById("loader").classList.add("hidden");
+            } catch (e) {
+                Swal.fire("فشل مزامنة", "حدث خطأ أثناء جلب البيانات.", "error");
+            }
+        }
 
-            let lines = text.split('\n');
-            let timeLine = "", subjectsLine = "", priceLine = "", namesLine = "";
+        async function login() {
+            let pin = document.getElementById("pinInput").value.trim();
+            if(!pin) return;
+            let user = systemData.supervisors.find(s => s.pin === pin);
+            if (user) {
+                currentUser = { name: user.name, role: user.role };
+                localStorage.setItem("wahy_user_name", user.name);
+                localStorage.setItem("wahy_user_role", user.role);
+                document.getElementById("loginScreen").classList.add("hidden");
+                
+                Swal.fire({ title: 'مرحباً بك!', text: `تم التأكد من صلاحياتك: ${user.role}`, icon: 'success', timer: 1500, showConfirmButton: false });
+                await loadAllData();
+                renderApp();
+            } else {
+                Swal.fire("مرفوض", "الرمز السري غير مسجل بالنظام.", "error");
+            }
+        }
 
-            lines.forEach(line => {
-                if(line.includes("بتوقيتهم") || line.includes("بتوقيتنا") || line.includes("اليوم") || line.includes("غدا")) {
-                    timeLine = line.trim();
-                } else if(line.includes("قرآن") || line.includes("عربي") || line.includes("إسلاميات") || line.includes("تأسيس")) {
-                    subjectsLine = line.trim();
-                } else if(line.includes("دولار") || line.includes("$")) {
-                    priceLine = line.trim();
-                } else if(line.trim().length > 2 && !namesLine) {
-                    namesLine = line.trim();
-                }
+        function logout() { localStorage.clear(); location.reload(); }
+
+        function renderApp() {
+            document.getElementById("appContainer").classList.remove("hidden");
+            document.getElementById("navRole").innerText = currentUser.role;
+            document.getElementById("mobileUserName").innerText = currentUser.name;
+
+            let navHtml = '';
+            if (currentUser.role === "مدير") {
+                navHtml += createNavBtn('admin', 'fas fa-chart-line', 'الإدارة', true);
+                navHtml += createNavBtn('crm', 'fas fa-tasks', 'سجل المتابعة');
+                navHtml += createNavBtn('teachers', 'fas fa-chalkboard-teacher', 'دليل المعلمين');
+                switchView('admin');
+                buildAdminDashboard();
+            } else {
+                navHtml += createNavBtn('new-trial', 'fas fa-plus-circle', 'ترايل جديد', true);
+                navHtml += createNavBtn('crm', 'fas fa-tasks', 'متابعة عملي');
+                navHtml += createNavBtn('teachers', 'fas fa-chalkboard-teacher', 'دليل المعلمين');
+                switchView('new-trial');
+            }
+            document.getElementById("navButtons").innerHTML = navHtml;
+            populateTeachers(true);
+            renderPendingTrials();
+        }
+
+        function createNavBtn(viewId, icon, text, isActive = false) {
+            let activeClass = isActive ? "text-wahy-gold border-t-4 md:border-t-0 md:border-r-4 border-wahy-gold bg-black/40" : "hover:bg-black/20 hover:text-white border-transparent";
+            return `
+            <button onclick="navClick('${viewId}', this)" class="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 py-3 md:py-5 md:px-6 transition-all duration-300 ${activeClass}">
+                <i class="${icon} text-xl md:text-2xl"></i>
+                <span class="text-[11px] md:text-sm font-black">${text}</span>
+            </button>`;
+        }
+
+        function navClick(viewId, btn) {
+            let container = document.getElementById("navButtons");
+            container.querySelectorAll('button').forEach(b => {
+                b.className = b.className.replace(/text-wahy-gold|border-wahy-gold|bg-black\/40|border-t-4|md:border-r-4/g, 'hover:bg-black/20 hover:text-white border-transparent').trim();
+            });
+            btn.className = btn.className.replace('hover:bg-black/20 hover:text-white border-transparent', 'text-wahy-gold border-t-4 md:border-t-0 md:border-r-4 border-wahy-gold bg-black/40');
+            switchView(viewId);
+            if(viewId === 'admin') buildAdminDashboard();
+            if(viewId === 'crm') renderPendingTrials();
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+        }
+
+        // ==========================================
+        // الإدارة العليا (Dashboard)
+        // ==========================================
+        function buildAdminDashboard() {
+            let totalTrials = systemData.trials.length;
+            let successTrials = systemData.trials.filter(t => t.status === "نجاح").length;
+            let conversion = totalTrials > 0 ? Math.round((successTrials / totalTrials) * 100) : 0;
+            
+            let expectedHours = 0;
+            systemData.trials.forEach(t => { if(t.status === "نجاح") expectedHours += parseFloat(t.totalHours || 0); });
+
+            document.getElementById("statTotalTrials").innerText = totalTrials;
+            document.getElementById("statSuccessTrials").innerText = successTrials;
+            document.getElementById("statConversion").innerText = conversion + "%";
+            document.getElementById("statRevenue").innerHTML = expectedHours.toFixed(1) + ' <span class="text-sm font-normal">ساعة</span>';
+
+            let supStats = {};
+            systemData.trials.forEach(t => {
+                let sName = t.supervisor;
+                if(!supStats[sName]) supStats[sName] = { total: 0, success: 0, pending: 0 };
+                supStats[sName].total++;
+                if (t.status === "نجاح") supStats[sName].success++;
+                if (t.status === "معلق") supStats[sName].pending++;
             });
 
-            let nameMatch = namesLine.match(/([a-zA-Z\s]+)/);
-            let ageMatch = namesLine.match(/(\d+)/);
+            let html = '';
+            for (let s in supStats) {
+                let st = supStats[s];
+                let rate = st.total > 0 ? Math.round((st.success/st.total)*100) : 0;
+                html += `
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                    <div>
+                        <h4 class="font-black text-wahy-dark text-lg mb-1"><i class="fas fa-user-shield text-gray-300 ml-2"></i>${s}</h4>
+                        <div class="flex gap-3 text-xs font-bold">
+                            <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md">معلق: ${st.pending}</span>
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-md">إغلاق: ${rate}%</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-3xl font-black text-wahy-dark leading-none">${st.success}</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">ناجح</p>
+                    </div>
+                </div>`;
+            }
+            document.getElementById("supervisorsPerformance").innerHTML = html || "<p class='text-gray-400 text-sm'>لا توجد عمليات مسجلة.</p>";
+        }
+
+        // ==========================================
+        // المحلل الذكي (Parser 2.0)
+        // ==========================================
+        function parseMessage2() {
+            let text = document.getElementById("rawMessage").value;
+            if(!text.trim()) return Swal.fire("عفواً", "الصق الرسالة أولاً لكي أحللها.", "warning");
             
-            document.getElementById("studentName").value = namesLine.replace(/[0-9]/g, '').replace(/years/g, '').replace(/yrs/g, '').trim();
-            document.getElementById("studentAge").value = ageMatch ? ageMatch[0] : "";
-            document.getElementById("subjects").value = subjectsLine;
-            document.getElementById("timing").value = timeLine;
-            document.getElementById("price").value = priceLine || "8 دولار";
+            let nameMatch = text.match(/(?:الطالب|اسم الطالب|الاسم)[:\-\s]+([^\n]+)/i);
+            let rawName = nameMatch ? nameMatch[1].trim() : "";
+            let isMultiple = rawName.includes(" و ") || rawName.includes(" وهنا "); 
+            document.getElementById("f_name").value = rawName;
+            document.getElementById("f_count").value = isMultiple ? 2 : 1;
 
-            Swal.fire({icon: 'success', title: 'تم التحليل', text: 'يرجى مراجعة الخانات وتعديل ما يلزم', timer: 1500, showConfirmButton: false});
-        }
+            document.getElementById("f_age").value = (text.match(/(?:العمر)[:\-\s]+(\d+)/i) || [])[1] || "";
+            document.getElementById("f_subjects").value = (text.match(/(?:المواد|مادة|يريدون دراسة)[:\-\s]+([^\n]+)/i) || [])[1] || "";
 
-        // --- توليد الرسائل ---
-        function generateMessages() {
-            let sName = document.getElementById("studentName").value;
-            let sAge = document.getElementById("studentAge").value;
-            let subj = document.getElementById("subjects").value;
-            let timing = document.getElementById("timing").value;
-            let tName = document.getElementById("teacherName").value;
-            let gLink = document.getElementById("groupLink").value;
+            let days = ["السبت", "الأحد", "الاحد", "الإثنين", "الاثنين", "الثلاثاء", "الأربعاء", "الاربعاء", "الخميس", "الجمعة"];
+            let foundDay = days.find(d => text.includes(d));
+            document.getElementById("f_day").value = foundDay || "";
 
-            if(!tName) return Swal.fire('تنبيه', 'يجب كتابة اسم المعلم أولاً', 'warning');
-
-            let tMsg = `السلام عليكم أستاذ(ة) ${tName}،\nيوجد حصة تجريبية (ترايل) جديدة بانتظارك!\n\n👨‍🎓 الطالب: ${sName} (العمر: ${sAge})\n📚 المواد: ${subj}\n🗓️ الموعد: ${timing}\n🔗 رابط الجروب: ${gLink}\n\nبالتوفيق إن شاء الله 🍀`;
-            document.getElementById("msgTeacher").value = tMsg;
-
-            let fMsg = `You have been scheduled with teacher ${tName}, and your session is ${timing}. \nPlease join using the permanent link below — this link will be used for all future sessions👇\n${gLink}`;
-            document.getElementById("msgFamily").value = fMsg;
-
-            document.getElementById("messagesSection").classList.remove("hidden");
-        }
-
-        function toggleInvoice() {
-            let status = document.getElementById("trialStatus").value;
-            document.getElementById("invoiceSection").classList.toggle("hidden", status !== "✅ نجاح");
-            document.getElementById("failReason").classList.toggle("hidden", status !== "❌ فشل");
-        }
-
-        function generateInvoice() {
-            let sName = document.getElementById("studentName").value;
-            let tName = document.getElementById("teacherName").value;
-            let sessions = document.getElementById("totalSessions").value;
-            let duration = document.getElementById("sessionDuration").value;
-            let price = document.getElementById("price").value.replace(/[^0-9]/g, ''); 
-            let startDate = new Date(document.getElementById("trialDate").value).toLocaleDateString('en-GB');
-
-            if(!sessions || !duration) return Swal.fire('تنبيه', 'أدخل عدد الحصص ومدة الحصة', 'warning');
-
-            let invMsg = `🍀 اسم الأسرة: ${sName}\n🍀 اسم المعلم : ${tName}\n🍀 عدد الحصص : ${sessions} (شهري)\n🍀 مدة كل حصة : ${duration} دقيقة\n🍀 سعر الساعه : ${price}\n🍀 تاريخ الاشتراك : ${startDate}`;
+            let familyTime = ""; let egyptTime = "";
+            let matchThem = text.match(/(.*)(?:بتوقيتهم|توقيت الطالب)/i);
+            if(matchThem) familyTime = matchThem[1].split(/[/|-]/).pop().trim();
             
-            document.getElementById("msgInvoice").value = invMsg;
-            document.getElementById("msgInvoice").classList.remove("hidden");
-            document.getElementById("btnInvoiceWA").classList.remove("hidden");
+            let matchUs = text.match(/(.*)(?:بتوقيتنا|توقيت مصر)/i);
+            if(matchUs) egyptTime = matchUs[1].split(/[/|-]/).pop().trim();
+
+            if(!familyTime && !egyptTime) {
+                let timeMatch = text.match(/(?:الموعد|الساعة)[:\-\s]+([^\n]+)/i);
+                familyTime = timeMatch ? timeMatch[1].trim() : "";
+            }
+
+            document.getElementById("f_studentTime").value = familyTime;
+            document.getElementById("f_egyptTime").value = egyptTime;
+            
+            document.getElementById("parsedDataForm").classList.remove("hidden");
+            Swal.fire({ title: 'تم التحليل بذكاء!', text: 'يرجى مراجعة الخانات وتعبئة النواقص.', icon: 'success', timer: 1500, showConfirmButton: false });
         }
 
-        // --- إرسال واتساب ---
-        function sendWA(elementId) {
-            let text = document.getElementById(elementId).value;
-            let encodedText = encodeURIComponent(text);
-            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        function toggleSuccessFields() {
+            let s = document.getElementById("trialStatus").value;
+            document.getElementById("successFields").style.display = (s === "نجاح") ? "grid" : "none";
+            document.getElementById("failFields").style.display = (s === "فشل") ? "block" : "none";
         }
 
-        // --- الترحيل لقاعدة البيانات ---
-        function saveToSystem() {
+        function calculateHours() {
+            let m = parseFloat(document.getElementById("f_duration").value) || 0;
+            let c = parseFloat(document.getElementById("f_sessions").value) || 0;
+            let t = (m * c) / 60;
+            document.getElementById("f_totalHours").value = t > 0 ? t.toFixed(2) : "";
+        }
+
+        async function submitTrial() {
+            if(!checkConnection()) return;
+            
             let status = document.getElementById("trialStatus").value;
-            if(!status) return Swal.fire('خطأ', 'يجب اختيار حالة الترايل قبل الترحيل', 'error');
-
-            let duration = document.getElementById("sessionDuration").value;
-            let sessions = document.getElementById("totalSessions").value;
-            let totalHrs = (status === "✅ نجاح") ? (parseInt(duration) * parseInt(sessions) / 60).toFixed(2) : "";
+            if (status === "نجاح" && !document.getElementById("f_totalHours").value) {
+                return Swal.fire("تنبيه أمان", "يجب إدخال مدة الحصة وعددها لحساب الساعات الإجمالية للمشترك.", "warning");
+            }
+            if (!document.getElementById("teacherSelect").value) {
+                return Swal.fire("تنبيه أمان", "يجب اختيار المعلم المسؤول.", "warning");
+            }
 
             let payload = {
                 action: "addTrial",
-                supervisorName: supervisorName,
-                studentName: document.getElementById("studentName").value,
-                age: document.getElementById("studentAge").value,
-                subjects: document.getElementById("subjects").value,
-                timing: document.getElementById("timing").value,
-                price: document.getElementById("price").value,
-                trialDate: new Date(document.getElementById("trialDate").value).toLocaleDateString('en-GB'),
-                teacherName: document.getElementById("teacherName").value,
-                groupLink: document.getElementById("groupLink").value,
+                supervisorName: currentUser.name,
+                studentName: document.getElementById("f_name").value,
+                studentCount: document.getElementById("f_count").value,
+                age: document.getElementById("f_age").value,
+                subjects: document.getElementById("f_subjects").value,
+                day: document.getElementById("f_day").value,
+                studentTime: document.getElementById("f_studentTime").value,
+                egyptTime: document.getElementById("f_egyptTime").value,
+                timeDiff: document.getElementById("f_timeDiff").value,
+                price: document.getElementById("f_price").value,
+                teacherName: document.getElementById("teacherSelect").value,
                 status: status,
-                failReason: document.getElementById("failReason").value,
-                duration: duration,
-                totalSessions: sessions,
-                totalHours: totalHrs,
-                startDate: new Date(document.getElementById("trialDate").value).toLocaleDateString('en-GB')
+                failReason: document.getElementById("f_failReason").value,
+                duration: document.getElementById("f_duration").value,
+                totalSessions: document.getElementById("f_sessions").value,
+                totalHours: document.getElementById("f_totalHours").value,
+                startDate: document.getElementById("f_startDate").value,
+                notes: document.getElementById("f_notes").value
             };
 
-            Swal.fire({
-                title: 'جاري الترحيل...',
-                text: 'يتم الآن حفظ البيانات وتحديث الساعات آلياً',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading() }
-            });
+            await serverRequest(payload, "تم ترحيل بيانات الترايل بنجاح وحفظها في الشيت الرئيسي.");
+            
+            // التنظيف الذاتي (Auto-Clean)
+            document.getElementById("rawMessage").value = "";
+            document.getElementById("parsedDataForm").classList.add("hidden");
+            document.getElementById("trialStatus").value = "معلق";
+            document.getElementById("f_duration").value = "";
+            document.getElementById("f_sessions").value = "";
+            document.getElementById("f_totalHours").value = "";
+            document.getElementById("f_failReason").value = "";
+            document.getElementById("f_notes").value = "";
+            document.getElementById("f_startDate").value = "";
+            toggleSuccessFields();
+            
+            await loadAllData(); 
+            if(currentUser.role === "مدير") buildAdminDashboard();
+        }
 
-            fetch(API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                Swal.fire('تم بنجاح! 👑', 'تم الترحيل والأتمتة في قاعدة البيانات', 'success')
-                .then(() => { window.location.reload(); });
-            }).catch(error => {
-                Swal.fire('حدث خطأ', 'تأكد من اتصالك بالإنترنت ورابط الـ API', 'error');
+        // ==========================================
+        // إدارة العملاء والمتابعة (CRM)
+        // ==========================================
+        function renderPendingTrials() {
+            let filter = document.getElementById("crmSearch") ? document.getElementById("crmSearch").value.toLowerCase() : "";
+            let list = document.getElementById("pendingTrialsList");
+            if(!list) return;
+            
+            let html = '';
+            let pending = systemData.trials.filter(t => t.status === "معلق");
+            if (currentUser.role !== "مدير") {
+                pending = pending.filter(t => t.supervisor === currentUser.name);
+            }
+
+            pending.forEach(t => {
+                if (t.studentName.toLowerCase().includes(filter)) {
+                    html += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-orange-400 hover:shadow-md transition cursor-pointer group" onclick="openEditModal(${t.rowIndex})">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-black text-wahy-dark text-lg group-hover:text-wahy-gold transition">${t.studentName}</h4>
+                            <span class="bg-orange-50 text-orange-600 text-xs font-black px-3 py-1 rounded-full border border-orange-200 shadow-sm animate-pulse">⏳ معلق</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-3 font-bold"><i class="fas fa-chalkboard-teacher ml-1 text-gray-400"></i>${t.teacher} | <i class="fas fa-calendar-alt ml-1 text-gray-400"></i>${t.day} (${t.egyptTime})</p>
+                        <div class="flex gap-2">
+                            <button class="flex-1 bg-gray-50 text-gray-600 py-2 rounded-xl text-xs font-black border border-gray-200 group-hover:bg-wahy-dark group-hover:text-white transition shadow-sm"><i class="fas fa-folder-open ml-1"></i> فتح ملف الطالب للتعديل</button>
+                        </div>
+                    </div>`;
+                }
             });
+            list.innerHTML = html || `<div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-200"><i class="fas fa-check-circle text-4xl text-green-400 mb-3 block"></i><p class="font-black text-gray-500">لا توجد ترايلات معلقة. إنجاز رائع!</p></div>`;
+        }
+
+        function openEditModal(rowIndex) {
+            let t = systemData.trials.find(x => x.rowIndex === rowIndex);
+            if(!t) return;
+            document.getElementById("edit_rowIndex").value = t.rowIndex;
+            document.getElementById("edit_oldStatus").value = t.status;
+            document.getElementById("edit_name").value = t.studentName;
+            document.getElementById("edit_teacher").value = t.teacher;
+            document.getElementById("edit_price").value = t.price || "";
+            document.getElementById("edit_groupLink").value = t.groupLink || "";
+            document.getElementById("edit_status").value = t.status;
+            document.getElementById("edit_notes").value = t.notes || "";
+            
+            document.getElementById("editTrialModal").classList.add("active");
+            toggleEditSuccessFields();
+        }
+
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove("active"); }
+
+        function toggleEditSuccessFields() {
+            let s = document.getElementById("edit_status").value;
+            document.getElementById("edit_successFields").style.display = (s === "نجاح") ? "grid" : "none";
+            document.getElementById("edit_failFields").style.display = (s === "فشل") ? "block" : "none";
+        }
+        
+        function calcEditHours() {
+            let m = parseFloat(document.getElementById("edit_duration").value) || 0;
+            let c = parseFloat(document.getElementById("edit_sessions").value) || 0;
+            document.getElementById("edit_totalHours").value = ((m*c)/60 > 0) ? ((m*c)/60).toFixed(2) : "";
+        }
+
+        async function saveTrialEdit() {
+            if(!checkConnection()) return;
+            let status = document.getElementById("edit_status").value;
+            if (status === "نجاح" && !document.getElementById("edit_totalHours").value) {
+                return Swal.fire("تنبيه أمان", "أدخل مدة الحصة وعددها لحساب الساعات الإجمالية.", "warning");
+            }
+
+            let rowIndex = parseInt(document.getElementById("edit_rowIndex").value);
+            let t = systemData.trials.find(x => x.rowIndex === rowIndex);
+            
+            let payload = {
+                action: "updateTrial",
+                rowIndex: rowIndex,
+                oldStatus: document.getElementById("edit_oldStatus").value,
+                supervisorName: t.supervisor, 
+                studentName: document.getElementById("edit_name").value,
+                groupLink: document.getElementById("edit_groupLink").value,
+                age: t.age, subjects: t.subjects, count: t.count, day: t.day,
+                studentTime: t.studentTime, egyptTime: t.egyptTime, timeDiff: t.timeDiff,
+                teacherName: t.teacher, 
+                price: document.getElementById("edit_price").value,
+                status: status,
+                failReason: document.getElementById("edit_failReason") ? document.getElementById("edit_failReason").value : "", 
+                duration: document.getElementById("edit_duration").value,
+                totalSessions: document.getElementById("edit_sessions").value,
+                totalHours: document.getElementById("edit_totalHours").value,
+                startDate: document.getElementById("edit_startDate").value,
+                notes: document.getElementById("edit_notes").value
+            };
+
+            await serverRequest(payload, "تم تحديث الملف بالكامل وحفظه في الشيت.");
+            closeModal('editTrialModal');
+            
+            // تنظيف البيانات المعلقة
+            document.getElementById("edit_duration").value = "";
+            document.getElementById("edit_sessions").value = "";
+            document.getElementById("edit_totalHours").value = "";
+            
+            await loadAllData();
+            renderApp();
+            if(currentUser.role === "مدير") buildAdminDashboard();
+        }
+
+        // ==========================================
+        // الموارد البشرية (دليل المعلمين)
+        // ==========================================
+        function populateTeachers(sortForBest = false) {
+            let select = document.getElementById("teacherSelect");
+            if(select) {
+                select.innerHTML = '<option value="">-- اضغط لاختيار المعلم --</option>';
+                let sorted = [...systemData.teachers];
+                if(sortForBest) {
+                    sorted.sort((a, b) => {
+                        let numA = parseFloat((a.successRate || "0").toString().replace('%', '')) || 0;
+                        let numB = parseFloat((b.successRate || "0").toString().replace('%', '')) || 0;
+                        return numB - numA; // ترتيب تنازلي (الأفضل أولاً)
+                    });
+                }
+                sorted.forEach(t => {
+                    select.innerHTML += `<option value="${t.name}" data-zoom="${t.zoom}">${t.name} (الإغلاق: ${t.successRate}%)</option>`;
+                });
+            }
+
+            let grid = document.getElementById("teachersGrid");
+            if(grid) {
+                grid.innerHTML = '';
+                systemData.teachers.forEach(t => {
+                    let hasZoom = t.zoom && t.zoom.includes("http") ? `href="${t.zoom}" target="_blank" class="bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white"` : `class="bg-gray-100 text-gray-300 cursor-not-allowed"`;
+                    grid.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 border border-gray-200"><i class="fas fa-user-tie text-xl"></i></div>
+                            <div>
+                                <h4 class="font-black text-wahy-dark">${t.name}</h4>
+                                <p class="text-xs font-bold text-gray-400 mt-1">معدل النجاح: <span class="text-green-500">${t.successRate}%</span></p>
+                            </div>
+                        </div>
+                        <a ${hasZoom} class="w-12 h-12 rounded-full flex items-center justify-center transition shadow-sm">
+                            <i class="fas fa-video text-xl"></i>
+                        </a>
+                    </div>`;
+                });
+            }
+        }
+
+        async function saveNewTeacher() {
+            if(!checkConnection()) return;
+            let name = document.getElementById("new_teacherName").value;
+            let sub = document.getElementById("new_teacherSubjects").value;
+            let zoom = document.getElementById("new_teacherZoom").value;
+            if(!name) return Swal.fire("حقل إلزامي", "يجب كتابة اسم المعلم.", "error");
+
+            await serverRequest({ action: "addTeacher", supervisorName: currentUser.name, teacherName: name, subjects: sub, zoom: zoom }, "تم إضافة المعلم للدليل بنجاح!");
+            closeModal('addTeacherModal');
+            document.getElementById("new_teacherName").value = '';
+            document.getElementById("new_teacherSubjects").value = '';
+            document.getElementById("new_teacherZoom").value = '';
+            await loadAllData();
+            renderApp();
+        }
+
+        // ==========================================
+        // أزرار المراسلة الآمنة (WhatsApp Logic)
+        // ==========================================
+        function sendTeacherWhatsApp() {
+            let name = document.getElementById("f_name").value || "[اسم الطالب]";
+            let day = document.getElementById("f_day").value || "[اليوم]";
+            let timeEGY = document.getElementById("f_egyptTime").value || "[التوقيت]";
+            let subjects = document.getElementById("f_subjects").value || "[المواد]";
+            let msg = `السلام عليكم ورحمة الله وبركاته،\nيوجد حصة تجريبية بانتظارك فضلاً:\n\n👨‍🎓 الطالب: ${name}\n📚 المواد: ${subjects}\n🗓️ الموعد المبدئي: يوم ${day} الساعة ${timeEGY} بتوقيت مصر\n\nهل هذا الموعد مناسب لحضرتك؟ 🍀`;
+            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank');
+        }
+
+        function sendFamilyWhatsApp() {
+            let select = document.getElementById("teacherSelect");
+            if(select.selectedIndex === 0) return Swal.fire("خطوة ناقصة!", "يجب اختيار المعلم أولاً لكي يستخرج النظام رابط الزوم الخاص به.", "error");
+            
+            let teacherZoom = select.options[select.selectedIndex].dataset.zoom;
+            if(!teacherZoom || teacherZoom === "undefined") return Swal.fire("انتباه!", "هذا المعلم لم يتم تسجيل رابط زوم له في النظام.", "warning");
+
+            let day = document.getElementById("f_day").value || "[Day]";
+            let timeFamily = document.getElementById("f_studentTime").value || "[Time]";
+            let msg = `Hello!\nYour trial session is scheduled:\n\n🗓️ Session Time: ${day} at ${timeFamily} (Your Local Time)\n\nPlease join using the permanent Zoom link below:\n🔗 ${teacherZoom}`;
+            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank');
+        }
+
+        // ==========================================
+        // محرك الاتصال بالسيرفر الأساسي (Core Fetcher)
+        // ==========================================
+        async function serverRequest(payload, successMsg) {
+            Swal.fire({ title: 'جاري الكتابة في الشيت...', text: 'لا تغلق الصفحة.', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+            try {
+                let res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+                let data = await res.json();
+                if(data.status === "success") Swal.fire('نجاح! 👑', successMsg || data.message, 'success');
+                else Swal.fire('السيرفر رفض الطلب', data.message, 'error');
+            } catch (err) { Swal.fire('خطأ شبكة', 'يبدو أن الإنترنت انقطع أثناء الترحيل.', 'error'); }
         }
     </script>
 </body>
